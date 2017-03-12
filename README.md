@@ -1,6 +1,8 @@
 # Pethreon: recurring payments on Ethereum
 
-We provide a way to support a creator (an artist, a musician, a programmer) in a regular fasion.
+Support your favourite creator (an artist, a musician, a programmer) in a regular fasion.
+
+![Logo](pethreon-logo.png)
 
 Compared to centralized alternatives, Pethreon:
 
