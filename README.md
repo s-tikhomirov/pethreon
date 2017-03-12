@@ -23,5 +23,5 @@ A *creator*:
 * publishes an Ethereum address and waits for supporters to pledge
 * can withdraw the available amount of ether anytime
 
-Created at the [Merkle week hackathon](http://www.merkleweek.com/hackathon).
+Created at the [Merkle week hackathon](http://www.merkleweek.com/hackathon) together with [@robcat](https://github.com/robcat) and [@stferr](https://github.com/stferr).
 Thanks to [Patreon](https://www.patreon.com/) for inspiration.
