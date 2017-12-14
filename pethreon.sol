@@ -1,4 +1,4 @@
-pragma solidity ^0.4.4;
+pragma solidity 0.4.19;
 
 /*
 An Ethereum version of recurring payments.
@@ -53,7 +53,10 @@ contract Pethreon {
         period = _period;
     }
     
-    function currentPeriod() constant returns (uint periodNumber) {
+    function currentPeriod()
+    internal
+    view
+    returns (uint periodNumber) {
         return (now - startOfEpoch) / period;
     }
     /*
@@ -66,11 +69,17 @@ contract Pethreon {
     /***** DEPOSIT & WITHDRAW *****/
     
     // Get your (yet unpledged) balance as a supporter
-    function balanceAsSupporter() constant returns (uint) {
+    function balanceAsSupporter()
+    public
+    view
+    returns (uint) {
         return supporterBalances[msg.sender];
     }
     
-    function balanceAsCreator() constant returns (uint) {
+    function balanceAsCreator()
+    public
+    view
+    returns (uint) {
         // sum up all expected payments from all pledges from all previous periods
         uint256 amount = 0;
         for (var period = afterLastWithdrawalPeriod[msg.sender]; period < currentPeriod(); period++) {
@@ -80,14 +89,19 @@ contract Pethreon {
     }
     
     // deposit ether to be used in future pledges
-    function deposit() payable returns (uint newBalance) {
+    function deposit()
+    public
+    payable
+    returns (uint newBalance) {
         supporterBalances[msg.sender] += msg.value;
         SupporterDeposited(currentPeriod(), msg.sender, msg.value);
         return supporterBalances[msg.sender];
     }
     
     // withdraw ether (generic function)
-    function withdraw(bool isSupporter, uint amount) internal returns (uint newBalance) {
+    function withdraw(bool isSupporter, uint amount)
+    internal
+    returns (uint newBalance) {
         var balances = isSupporter ? supporterBalances : creatorBalances;
         uint oldBalance = balances[msg.sender];
         if (balances[msg.sender] < amount) return oldBalance;
@@ -100,13 +114,15 @@ contract Pethreon {
     }
     
     // Supporter can choose how much to withdraw
-    function withdrawAsSupporter(uint amount) {
+    function withdrawAsSupporter(uint amount)
+    public {
         withdraw(true, amount);
         SupporterWithdrew(currentPeriod(), msg.sender, amount);
     }
     
     // Creator can only withdraw the full amount available (keeping it simple!)
-    function withdrawAsCreator() {
+    function withdrawAsCreator()
+    public {
         var amount = balanceAsCreator();
         afterLastWithdrawalPeriod[msg.sender] = currentPeriod();
         withdraw(false, amount);
@@ -116,18 +132,22 @@ contract Pethreon {
     
     /***** PLEDGES *****/
     
-    function canPledge(uint _weiPerPeriod, uint _periods) internal returns (bool enoughFunds) {
+    function canPledge(uint _weiPerPeriod, uint _periods)
+    internal
+    view
+    returns (bool enoughFunds) {
         return (supporterBalances[msg.sender] >= _weiPerPeriod * _periods);
     }
     
-    function createPledge(address _creator, uint _weiPerPeriod, uint _periods) {
+    function createPledge(address _creator, uint _weiPerPeriod, uint _periods)
+    public {
         
         // must have enough funds
-        if (!canPledge(_weiPerPeriod, _periods)) throw;
+        require(canPledge(_weiPerPeriod, _periods));
         
         // can't pledge twice for same creator (for simplicity)
         // to change pledge parameters, cancel it and create a new one
-        if (pledges[msg.sender][_creator].initialized) throw;
+        require(!pledges[msg.sender][_creator].initialized);
         
         // update creator's mapping of future payments
         for (uint period = currentPeriod(); period < _periods; period++) {
@@ -147,9 +167,10 @@ contract Pethreon {
         PledgeCreated(currentPeriod(), _creator, msg.sender, _weiPerPeriod, _periods);
     }
     
-    function cancelPledge(address _creator) {
+    function cancelPledge(address _creator) 
+    public {
         var pledge = pledges[msg.sender][_creator];
-        if (!pledge.initialized) throw;
+        require(pledge.initialized);
         supporterBalances[msg.sender] += pledge.weiPerPeriod * (pledge.afterLastPeriod - currentPeriod());
         for (uint period = currentPeriod(); period < pledge.afterLastPeriod; period++) {
             expectedPayments[_creator][period] -= pledge.weiPerPeriod;
@@ -158,21 +179,13 @@ contract Pethreon {
         PledgeCancelled(currentPeriod(), _creator, msg.sender);
     }
     
-    function myPledgeTo(address _creator) constant returns (uint weiPerPeriod, uint afterLastPeriod) {
+    function myPledgeTo(address _creator)
+    public
+    view
+    returns (uint weiPerPeriod, uint afterLastPeriod) {
         var pledge = pledges[msg.sender][_creator];
         return (pledge.weiPerPeriod, pledge.afterLastPeriod);
     }
     
 }
-
-
-
-
-
-
-
-
-
-
-
 
